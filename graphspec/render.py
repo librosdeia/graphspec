@@ -74,9 +74,15 @@ def node_label(graph: Graph, node: Node) -> str:
     return label
 
 
-def _node_stmt(graph: Graph, node: Node) -> str:
+def _node_stmt(graph: Graph, node: Node,
+               overrides: dict[str, dict[str, str]] | None = None,
+               label_suffixes: dict[str, str] | None = None) -> str:
     attrs = dict(_KIND_ATTRS.get(node.kind, _UNKNOWN_KIND_ATTRS))
     attrs["label"] = node_label(graph, node)
+    if label_suffixes and node.name in label_suffixes:
+        attrs["label"] += label_suffixes[node.name]
+    if overrides and node.name in overrides:
+        attrs.update(overrides[node.name])
     return f"  {_q(node.name)} {_attrs(attrs)};"
 
 
@@ -105,8 +111,15 @@ def _edge_stmt(edge: Edge) -> str:
     return f"  {_q(edge.from_)} -> {_q(edge.to)}{suffix};"
 
 
-def to_dot(graph: Graph) -> str:
-    """Deterministic DOT for *graph* (same input -> byte-identical output)."""
+def to_dot(graph: Graph,
+           overrides: dict[str, dict[str, str]] | None = None,
+           label_suffixes: dict[str, str] | None = None) -> str:
+    """Deterministic DOT for *graph* (same input -> byte-identical output).
+
+    *overrides* maps node name -> DOT attribute overrides and *label_suffixes*
+    maps node name -> text appended to the label; the trace overlay uses both.
+    The one-renderer rule: overlays restyle this output, they never re-lay it out.
+    """
     lines: list[str] = []
     name = graph.name or "graphspec"
     lines.append(f"digraph {_q(name)} {{")
@@ -125,11 +138,11 @@ def to_dot(graph: Graph) -> str:
             for nname in sorted(graph.nodes):
                 node = graph.nodes[nname]
                 if graph.effective_substrate(node) == substrate:
-                    lines.append("  " + _node_stmt(graph, node))
+                    lines.append("  " + _node_stmt(graph, node, overrides, label_suffixes))
             lines.append("  }")
     else:
         for nname in sorted(graph.nodes):
-            lines.append(_node_stmt(graph, graph.nodes[nname]))
+            lines.append(_node_stmt(graph, graph.nodes[nname], overrides, label_suffixes))
         # entry at the top, terminals at the bottom (global ranks fight
         # clusters, so they are emitted only in the unclustered layout)
         if graph.entry in graph.nodes:
