@@ -416,6 +416,8 @@
   const gs = {
     api, state, editor, canvas, jumpToLine, gotoProblem, zoom, fit, save,
     findSvgElement, titleOf,
+    panBy: (dx, dy) => { state.pan.x += dx; state.pan.y += dy; applyPan(); },
+    refresh,
     yaml: () => editor.value,
     svg: () => canvas.querySelector('svg'),
     on: (ev, cb) => { (listeners[ev] = listeners[ev] || []).push(cb); },
