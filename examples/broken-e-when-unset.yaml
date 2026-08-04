@@ -1,0 +1,25 @@
+# fires E-WHEN-UNSET: 'start' -> 'gate' tests 'flag', written only by 'worker'
+# (which never runs before this edge), and 'start' -> 'other' tests
+# 'nonexistent', which is not a declared state field at all.
+graphspec: 1
+name: broken-when-unset
+entry: start
+terminals: [done, dropped]
+
+state:
+  flag: {type: bool, write: [worker]}
+
+nodes:
+  start:  {kind: function}
+  worker: {kind: function}
+  gate:   {kind: function}
+  other:  {kind: terminal}
+  done:   {kind: terminal}
+  dropped: {kind: terminal}
+
+edges:
+  - {from: start,  to: worker}
+  - {from: start,  to: gate,  when: "flag == true"}
+  - {from: start,  to: other, when: "nonexistent == true"}
+  - {from: worker, to: gate}
+  - {from: gate,   to: done}
