@@ -1,0 +1,18 @@
+# fires E-NO-TERMINAL: node 'stray' has no outgoing edges and is not a terminal,
+# so it has no path to any terminal.
+graphspec: 1
+name: no-terminal-example
+entry: start
+terminals: [done]
+
+state:
+  status: {type: string, write: [start]}
+
+nodes:
+  start:  {kind: function, impl: scripts/start.py, effects: none}
+  stray:  {kind: function, impl: scripts/stray.py, effects: none}
+  done:   {kind: terminal}
+
+edges:
+  - {from: start, to: done, when: "status == 'ok'"}
+  - {from: start, to: stray, when: "status == 'stuck'"}
