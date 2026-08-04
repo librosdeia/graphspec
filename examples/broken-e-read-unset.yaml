@@ -1,0 +1,23 @@
+# fires E-READ-UNSET: 'd' reads 'x', but only 'b' writes it — the entry->c->d
+# path reaches 'd' with 'x' never written.
+graphspec: 1
+name: broken-e-read-unset
+entry: entry
+terminals: [done]
+
+state:
+  x: {type: string, write: [b], read: [d]}
+
+nodes:
+  entry: {kind: function}
+  b:     {kind: function}
+  c:     {kind: function}
+  d:     {kind: function}
+  done:  {kind: terminal}
+
+edges:
+  - {from: entry, to: b}
+  - {from: entry, to: c}
+  - {from: b, to: d}
+  - {from: c, to: d}
+  - {from: d, to: done}
