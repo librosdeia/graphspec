@@ -1,0 +1,15 @@
+# BeastCode session tracking
+.beastcode/
+.idealcode/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+dist/
+build/
+
+# macOS
+.DS_Store
