@@ -47,7 +47,8 @@ _JOIN_GLYPH = {"all": "∀", "any": "∃", "majority": "½", "first": "1"}
 
 
 def _q(s: str) -> str:
-    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    # Backslashes are left alone on purpose: DOT labels use \n as an escape.
+    return '"' + s.replace('"', '\\"') + '"'
 
 
 def _attrs(d: dict[str, str]) -> str:
