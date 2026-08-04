@@ -1,0 +1,165 @@
+name: graphspec validate
+
+# Reusable workflow: other repositories call this from their own workflow
+# (`uses: librosdeia/graphspec/.github/workflows/graphspec-validate.yml@main`)
+# to review topology changes the way a change in code gets reviewed —
+# validate the graph, comment the semantic diff against the PR base, and
+# publish a rendered diagram as a build artifact.
+
+on:
+  workflow_call:
+    inputs:
+      file:
+        description: "Path to the graphspec YAML file to validate, relative to the caller's repo root."
+        type: string
+        default: ./graphspec.yaml
+      python-version:
+        description: "Python version to run graphspec with."
+        type: string
+        default: "3.12"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: install graphspec
+        run: pip install graphspec
+
+      - name: validate
+        env:
+          GRAPHSPEC_FILE: ${{ inputs.file }}
+        run: graphspec validate "$GRAPHSPEC_FILE"
+
+  diff-comment:
+    needs: validate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: fetch base branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git fetch origin "$BASE_REF"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: install graphspec
+        run: pip install graphspec
+
+      - name: materialize base version
+        id: base
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          GRAPHSPEC_FILE: ${{ inputs.file }}
+        run: |
+          if git show "origin/$BASE_REF:$GRAPHSPEC_FILE" > base-version.yaml 2>/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::${GRAPHSPEC_FILE} does not exist on base branch ${BASE_REF} yet; skipping diff comment."
+          fi
+
+      - name: copy head version
+        if: steps.base.outputs.exists == 'true'
+        env:
+          GRAPHSPEC_FILE: ${{ inputs.file }}
+        run: cp "$GRAPHSPEC_FILE" head-version.yaml
+
+      - name: compute diff
+        if: steps.base.outputs.exists == 'true'
+        run: |
+          # graphspec diff exits 1 when there ARE changes — that is data
+          # here, not a failure. `|| true` keeps that from failing the job;
+          # the upsert step below decides whether diff.md is worth posting.
+          graphspec diff base-version.yaml head-version.yaml --format markdown > diff.md || true
+
+      - name: post or refresh PR comment
+        if: steps.base.outputs.exists == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            if (!fs.existsSync('diff.md')) {
+              return;
+            }
+
+            const diff = fs.readFileSync('diff.md', 'utf8').trim();
+            if (!diff) {
+              // Exit 0 diff means no topology changes: no comment needed.
+              return;
+            }
+
+            const marker = '<!-- graphspec-diff-comment -->';
+            const body = `${marker}\n${diff}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find((c) => c.body && c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+  render-artifact:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: install graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz
+
+      - name: install graphspec
+        run: pip install graphspec
+
+      - name: render svg
+        env:
+          GRAPHSPEC_FILE: ${{ inputs.file }}
+        run: graphspec render "$GRAPHSPEC_FILE" --format svg > graph.svg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: graphspec-render
+          path: graph.svg

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: install
+        run: pip install -e '.[dev]'
+
+      - name: lint (compileall)
+        run: python -m compileall graphspec -q
+
+      - name: test
+        run: python -m pytest -q
+
+      - name: validate examples (no Graphviz required)
+        run: |
+          graphspec validate examples/software-delivery.yaml
+          graphspec validate examples/research-publishing.yaml
+          graphspec validate examples/support-triage.yaml
+          graphspec render examples/software-delivery.yaml > /dev/null
+
+  render-svg:
+    # Same DOT-first pipeline, but with Graphviz installed, to cover the
+    # --format svg shell-out path that the matrix job above deliberately
+    # skips.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: install graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz
+
+      - name: install
+        run: pip install -e '.[dev]'
+
+      - name: render svg via dot
+        run: graphspec render examples/software-delivery.yaml --format svg > /dev/null
