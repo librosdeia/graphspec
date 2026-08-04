@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/librosdeia/graphspec/blob/main/schema/graphspec.schema.json",
+  "title": "graphspec.yaml",
+  "description": "Declared agent-graph topology for graphspec 1. Unknown keys are permitted (the CLI warns): the format stays extensible.",
+  "type": "object",
+  "required": ["graphspec", "entry", "terminals", "nodes"],
+  "properties": {
+    "graphspec": { "const": 1, "description": "Format version." },
+    "name": { "type": "string" },
+    "entry": { "type": "string", "description": "Node where every run starts." },
+    "terminals": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Nodes where a run may end; no outgoing edges allowed."
+    },
+    "substrate": { "$ref": "#/$defs/substrate" },
+    "state": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/stateField" }
+    },
+    "nodes": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/node" },
+      "minProperties": 1
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "checkpoints": {
+      "type": "object",
+      "properties": {
+        "after": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "substrate": {
+      "enum": ["subagent", "workflow", "team", "scheduled", "channel"],
+      "description": "Where the node runs in Claude Code. Default: workflow."
+    },
+    "stateField": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["string", "number", "bool", "list", "object", "enum", "ref"] },
+        "values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required when type is enum."
+        },
+        "write": { "type": "array", "items": { "type": "string" } },
+        "read": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "Reader node name; suffix '?' declares an optional read (quote it in YAML flow style: 'node?')."
+          }
+        }
+      },
+      "if": { "properties": { "type": { "const": "enum" } } },
+      "then": { "required": ["type", "values"] },
+      "additionalProperties": true
+    },
+    "node": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["function", "llm", "subagent", "human", "terminal"] },
+        "substrate": { "$ref": "#/$defs/substrate" },
+        "agent": { "type": "string", "description": "Subagent name (kind: subagent)." },
+        "model": { "type": "string" },
+        "tools": { "type": "array", "items": { "type": "string" } },
+        "budget_tokens": { "type": "integer", "minimum": 1 },
+        "effects": { "enum": ["none", "external"], "default": "none" },
+        "idempotency_key": {
+          "type": "string",
+          "description": "Template over declared state field names in {braces}, plus the node's own 'as' binding. Required when effects is external."
+        },
+        "fan_out_over": { "type": "string", "description": "Name of a list state field." },
+        "as": { "type": "string", "description": "Per-item binding name; required with fan_out_over." },
+        "concurrency": { "type": "integer", "minimum": 1 },
+        "isolation": { "enum": ["worktree"] },
+        "verifies": { "type": "string", "description": "Node this one verifies; must differ in agent or model." },
+        "join": { "enum": ["all", "any", "majority", "first"] },
+        "timeout": { "type": "string", "description": "e.g. 48h. Required on kind: human." },
+        "on_timeout": { "type": "string", "description": "escalate | fail | a declared node name." },
+        "presents": { "type": "array", "items": { "type": "string" } },
+        "impl": { "type": "string", "description": "Path relative to the YAML file's directory." }
+      },
+      "additionalProperties": true
+    },
+    "edge": {
+      "type": "object",
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "when": { "type": "string", "description": "Guard over state fields: == != < <= > >= && || ! and parentheses only." },
+        "max": { "type": "integer", "minimum": 1 },
+        "counter": { "type": "string", "description": "Number state field written by this edge; initialized to 0 at run start." },
+        "on_exhausted": { "type": "string", "description": "escalate | fail | a declared node name." }
+      },
+      "dependentRequired": {
+        "max": ["counter", "on_exhausted"]
+      },
+      "additionalProperties": true
+    }
+  }
+}
