@@ -1,0 +1,46 @@
+digraph "research-publishing" {
+  rankdir=TB;
+  node [fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9];
+  subgraph "cluster_channel" {
+    label="substrate: channel";
+    style=dashed; color="#888888";
+    "notify_authors" [shape="box", style="filled", fillcolor="#F2F2F2", label="notify_authors ⚡"];
+  }
+  subgraph "cluster_scheduled" {
+    label="substrate: scheduled";
+    style=dashed; color="#888888";
+    "topic_intake" [shape="box", style="rounded,filled", fillcolor="#DDEBF7", label="topic_intake"];
+  }
+  subgraph "cluster_workflow" {
+    label="substrate: workflow";
+    style=dashed; color="#888888";
+    "assign_reviewers" [shape="box", style="filled", fillcolor="#F2F2F2", label="assign_reviewers"];
+    "draft" [shape="box", style="rounded,filled", fillcolor="#DDEBF7", label="draft\n✓"];
+    "editor_decision" [shape="diamond", style="filled", fillcolor="#FDE9C8", label="editor_decision\n✓"];
+    "lit_sweep" [shape="box", peripheries="2", style="filled", fillcolor="#E6F2E6", label="lit_sweep ⧉∥4 ⚡"];
+    "out_of_scope" [shape="doublecircle", style="filled", fillcolor="#F2F2F2", label="out_of_scope"];
+    "panel_verdict" [shape="box", style="filled", fillcolor="#F2F2F2", label="½ panel_verdict"];
+    "publish_node" [shape="box", style="filled", fillcolor="#F2F2F2", label="publish_node ⚡"];
+    "published" [shape="doublecircle", style="filled", fillcolor="#F2F2F2", label="published"];
+    "rejected" [shape="doublecircle", style="filled", fillcolor="#F2F2F2", label="rejected"];
+    "reviewer_panel" [shape="box", peripheries="2", style="filled", fillcolor="#E6F2E6", label="reviewer_panel ⧉∥3 ⚡"];
+    "source_split" [shape="box", style="filled", fillcolor="#F2F2F2", label="source_split"];
+    "synthesis" [shape="box", style="rounded,filled", fillcolor="#DDEBF7", label="∃ synthesis\n✓"];
+  }
+  "topic_intake" -> "source_split" [style="dashed", label="scope == 'research'"];
+  "topic_intake" -> "out_of_scope" [style="dashed", label="scope == 'out_of_scope'"];
+  "source_split" -> "lit_sweep";
+  "lit_sweep" -> "synthesis";
+  "synthesis" -> "draft";
+  "draft" -> "assign_reviewers";
+  "assign_reviewers" -> "reviewer_panel";
+  "reviewer_panel" -> "panel_verdict";
+  "panel_verdict" -> "editor_decision";
+  "editor_decision" -> "draft" [style="dashed", color="#B22222", label="final_decision == 'revise'\nmax=2"];
+  "editor_decision" -> "publish_node" [style="dashed", label="final_decision == 'publish'"];
+  "editor_decision" -> "notify_authors" [style="dashed", label="final_decision == 'reject'"];
+  "publish_node" -> "notify_authors";
+  "notify_authors" -> "published" [style="dashed", label="final_decision == 'publish'"];
+  "notify_authors" -> "rejected" [style="dashed", label="final_decision == 'reject'"];
+}

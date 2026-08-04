@@ -1,0 +1,114 @@
+graphspec: 1
+name: research-publishing
+entry: topic_intake
+terminals: [published, rejected, out_of_scope]
+
+state:
+  topic_id: {type: string, write: [topic_intake], read: [source_split, lit_sweep, publish_node, notify_authors]}
+  scope:    {type: enum, values: [research, out_of_scope], write: [topic_intake]}
+  sources:  {type: list, write: [source_split], read: [lit_sweep]}
+  findings: {type: ref,  write: [synthesis], read: [draft]}
+  draft_doc: {type: ref, write: [draft], read: [reviewer_panel, editor_decision, publish_node]}
+  reviewers: {type: list, write: [assign_reviewers], read: [reviewer_panel]}
+  review_verdict: {type: enum, values: [accept, revise, reject], write: [panel_verdict], read: [editor_decision]}
+  final_decision: {type: enum, values: [publish, revise, reject], write: [editor_decision], read: [notify_authors]}
+  revision_rounds: {type: number}   # counter — written by the edge that declares it
+
+nodes:
+  topic_intake:
+    kind: llm
+    substrate: scheduled
+    tools: [intake_queue_read]
+    budget_tokens: 15000
+    effects: none
+
+  source_split:
+    kind: function
+    impl: scripts/research_source_split.py
+    effects: none
+
+  lit_sweep:
+    kind: subagent
+    agent: literature-scanner
+    model: claude-sonnet-5
+    fan_out_over: sources
+    as: source
+    concurrency: 4
+    effects: external
+    idempotency_key: "{topic_id}-{source}"
+
+  synthesis:
+    kind: llm
+    join: any
+    budget_tokens: 30000
+    effects: none
+
+  draft:
+    kind: llm
+    budget_tokens: 40000
+    effects: none
+
+  assign_reviewers:
+    kind: function
+    impl: scripts/research_assign_reviewers.py
+    effects: none
+
+  reviewer_panel:
+    kind: subagent
+    agent: peer-reviewer
+    model: claude-sonnet-5
+    fan_out_over: reviewers
+    as: reviewer
+    concurrency: 3
+    effects: external
+    idempotency_key: "{topic_id}-{reviewer}"
+
+  panel_verdict:
+    kind: function
+    impl: scripts/research_tally_votes.py
+    join: majority
+    effects: none
+
+  editor_decision:
+    kind: human
+    timeout: 72h
+    on_timeout: escalate
+    presents: [draft_doc, review_verdict]
+
+  publish_node:
+    kind: function
+    impl: scripts/research_publish.py
+    effects: external
+    idempotency_key: "{topic_id}"
+
+  notify_authors:
+    kind: function
+    substrate: channel
+    impl: scripts/research_notify.py
+    effects: external
+    idempotency_key: "{topic_id}-{final_decision}"
+
+  published:    {kind: terminal}
+  rejected:     {kind: terminal}
+  out_of_scope: {kind: terminal}
+
+edges:
+  - {from: topic_intake,    to: source_split,   when: "scope == 'research'"}
+  - {from: topic_intake,    to: out_of_scope,    when: "scope == 'out_of_scope'"}
+  - {from: source_split,    to: lit_sweep}
+  - {from: lit_sweep,       to: synthesis}
+  - {from: synthesis,       to: draft}
+  - {from: draft,           to: assign_reviewers}
+  - {from: assign_reviewers, to: reviewer_panel}
+  - {from: reviewer_panel,  to: panel_verdict}
+  - {from: panel_verdict,   to: editor_decision}
+  - {from: editor_decision, to: draft,           when: "final_decision == 'revise'",
+     max: 2, counter: revision_rounds, on_exhausted: escalate}
+  - {from: editor_decision, to: publish_node,    when: "final_decision == 'publish'"}
+  - {from: editor_decision, to: notify_authors,  when: "final_decision == 'reject'"}
+  - {from: publish_node,    to: notify_authors}
+  - {from: notify_authors,  to: published,       when: "final_decision == 'publish'"}
+  - {from: notify_authors,  to: rejected,        when: "final_decision == 'reject'"}
+
+checkpoints:
+  after: [synthesis, draft, editor_decision]
