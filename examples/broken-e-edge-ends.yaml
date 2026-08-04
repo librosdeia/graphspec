@@ -1,0 +1,13 @@
+# fires E-EDGE-ENDS: edge 'to: missing' names a node that is never declared under nodes:
+graphspec: 1
+name: broken-edge-ends
+entry: start
+terminals: [end]
+
+nodes:
+  start: {kind: llm, effects: none}
+  end:   {kind: terminal}
+
+edges:
+  - {from: start, to: missing}
+  - {from: start, to: end}
