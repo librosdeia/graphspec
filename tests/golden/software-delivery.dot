@@ -1,0 +1,27 @@
+digraph "software-delivery" {
+  rankdir=TB;
+  node [fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9];
+  "dropped" [shape="doublecircle", style="filled", fillcolor="#F2F2F2", label="dropped"];
+  "fanout" [shape="box", style="filled", fillcolor="#F2F2F2", label="fanout"];
+  "gate" [shape="diamond", style="filled", fillcolor="#FDE9C8", label="gate\n✓"];
+  "implement" [shape="box", peripheries="2", style="filled", fillcolor="#E6F2E6", label="implement ⧉∥3 ⚡\n✓"];
+  "merge" [shape="box", style="filled", fillcolor="#F2F2F2", label="merge ⚡"];
+  "spec" [shape="box", peripheries="2", style="filled", fillcolor="#E6F2E6", label="spec\n✓"];
+  "triage" [shape="box", style="rounded,filled", fillcolor="#DDEBF7", label="triage"];
+  "verify" [shape="box", peripheries="2", style="filled", fillcolor="#E6F2E6", label="∀ verify"];
+  {rank=source; "triage";}
+  {rank=sink; "dropped" "merge";}
+  "triage" -> "spec" [style="dashed", label="category == 'feature'"];
+  "triage" -> "fanout" [style="dashed", label="category == 'bugfix'"];
+  "triage" -> "dropped" [style="dashed", label="category == 'drop'"];
+  "spec" -> "fanout";
+  "fanout" -> "implement";
+  "implement" -> "verify";
+  "verify" -> "implement" [style="dashed", color="#B22222", label="verdict == 'fail'\nmax=3"];
+  "verify" -> "gate" [style="dashed", label="verdict == 'pass'"];
+  "gate" -> "merge" [style="dashed", label="decision == 'approved'"];
+  "gate" -> "fanout" [style="dashed", color="#B22222", label="decision == 'changes_requested'\nmax=2"];
+  "gate" -> "dropped" [color="#B22222", style="dashed", label="on_exhausted"];
+  "verify" -> "gate" [color="#B22222", style="dashed", label="on_exhausted"];
+}
