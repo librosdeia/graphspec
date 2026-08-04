@@ -1,0 +1,22 @@
+# fires E-EFFECTS: 'charge' has effects: external but no idempotency_key, and
+# 'notify' has an idempotency_key referencing '{customer_id}' which is neither
+# a declared state field nor its 'as' binding.
+graphspec: 1
+name: broken-e-effects
+entry: charge
+terminals: [done]
+
+state:
+  order_id: {type: string, write: [charge]}
+
+nodes:
+  charge: {kind: function, effects: external}
+  notify:
+    kind: function
+    effects: external
+    idempotency_key: "{customer_id}-{order_id}"
+  done: {kind: terminal}
+
+edges:
+  - {from: charge, to: notify}
+  - {from: notify, to: done}
