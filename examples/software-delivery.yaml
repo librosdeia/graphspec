@@ -1,0 +1,61 @@
+graphspec: 1
+name: software-delivery
+entry: triage
+terminals: [merge, dropped]
+
+state:
+  issue_id: {type: string, write: [triage], read: [spec, implement, merge]}
+  category: {type: enum, values: [feature, bugfix, drop], write: [triage]}
+  # optional reads carry a '?' suffix; YAML flow style requires quoting them
+  spec:     {type: ref,  write: [spec, gate], read: ['implement?', 'verify?']}
+  branches: {type: list, write: [fanout], read: [implement, verify]}
+  verdict:  {type: enum, values: [pass, fail], write: [verify], read: [gate]}
+  decision: {type: enum, values: [approved, changes_requested], write: [gate]}
+  attempts:  {type: number}   # counter — written by the edge that declares it
+  revisions: {type: number}   # counter — written by the edge that declares it
+
+nodes:
+  triage:    {kind: llm,      tools: [gh_read], budget_tokens: 20000, effects: none}
+  spec:      {kind: subagent, agent: spec-writer, substrate: workflow, effects: none}
+  fanout:    {kind: function, impl: scripts/split.py, effects: none}
+  implement:
+    kind: subagent
+    agent: implementer
+    model: claude-sonnet-5
+    fan_out_over: branches
+    as: branch
+    concurrency: 3
+    isolation: worktree
+    effects: external
+    idempotency_key: "{issue_id}-{branch}"
+  verify:
+    kind: subagent
+    agent: verifier
+    model: claude-opus-5
+    verifies: implement
+    join: all
+    effects: none
+  gate:
+    kind: human
+    timeout: 48h
+    on_timeout: escalate
+    presents: [spec, branches, verdict]
+  merge:   {kind: function, impl: scripts/merge.py, effects: external, idempotency_key: "{issue_id}"}
+  dropped: {kind: terminal}
+
+edges:
+  - {from: triage,    to: spec,      when: "category == 'feature'"}
+  - {from: triage,    to: fanout,    when: "category == 'bugfix'"}
+  - {from: triage,    to: dropped,   when: "category == 'drop'"}
+  - {from: spec,      to: fanout}
+  - {from: fanout,    to: implement}
+  - {from: implement, to: verify}
+  - {from: verify,    to: implement, when: "verdict == 'fail'",
+     max: 3, counter: attempts, on_exhausted: gate}
+  - {from: verify,    to: gate,      when: "verdict == 'pass'"}
+  - {from: gate,      to: merge,     when: "decision == 'approved'"}
+  - {from: gate,      to: fanout,    when: "decision == 'changes_requested'",
+     max: 2, counter: revisions, on_exhausted: dropped}
+
+checkpoints:
+  after: [spec, implement, gate]
