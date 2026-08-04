@@ -37,8 +37,12 @@ def test_no_external_requests_in_static_assets():
         text = re.sub(r"(?m)^\s*//.*$", "", text)
         text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
         for m in re.finditer(r"https?://[^\s\"'<>)]+", text):
-            if "127.0.0.1" not in m.group(0) and "localhost" not in m.group(0):
-                offenders.append(f"{path}: {m.group(0)}")
+            url = m.group(0)
+            # XML namespace identifiers are names, not requests
+            if url.startswith("http://www.w3.org/"):
+                continue
+            if "127.0.0.1" not in url and "localhost" not in url:
+                offenders.append(f"{path}: {url}")
     assert offenders == [], offenders
 
 
