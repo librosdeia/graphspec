@@ -62,6 +62,23 @@ additionally warns about *advisory* fields — declared behavior the generated c
 documents but does not enforce — so the gap between declaration and implementation is
 visible, never silent. The rule table is in [`docs/FORMAT.md`](docs/FORMAT.md).
 
+## Render
+
+```sh
+graphspec render [FILE] [--format dot|svg|png]
+```
+
+Emits Graphviz DOT on stdout by default — deterministic, byte-identical across runs, so
+it diffs cleanly in CI. `--format svg|png` shells out to `dot` and fails with an install
+hint when Graphviz is absent. The visual grammar is stable (the book prints these
+figures): node shape and colour by `kind` (`function` rectangle, `llm` rounded box,
+`subagent` double border, `human` diamond, `terminal` doubled circle); conditional edges
+dashed and labelled with their `when`; cycle-capping and `on_timeout`/`on_exhausted`
+edges in a distinct colour with `max=N`; shape-encoded badges (⚡ external effects,
+⧉`∥N` fan-out with concurrency, `∀ ∃ ½ 1` join glyphs, ✓ checkpoints); substrate
+clusters when a graph spans more than one substrate; `entry` at the top, `terminals` at
+the bottom.
+
 ## Status
 
 Pre-1.0, built milestone by milestone (`v0.1.0` = model + validator). The
