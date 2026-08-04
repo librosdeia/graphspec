@@ -1,0 +1,164 @@
+{
+  "_comment": "Synthesized OTLP/JSON export of a software-delivery bugfix run (triage -> fanout -> implement x2 -> verify -> fail -> implement x2 -> verify -> pass; stopped waiting at the human gate). Span names/attributes follow Claude Code's beta OTel instrumentation (CLAUDE_CODE_ENABLE_TELEMETRY=1 + CLAUDE_CODE_ENHANCED_TELEMETRY_BETA=1). Regenerate from a live capture before the book freeze; graphspec/trace/mapping.py is the only consumer.",
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          { "key": "service.name", "value": { "stringValue": "claude-code" } },
+          { "key": "session.id", "value": { "stringValue": "sess-1" } },
+          { "key": "team", "value": { "stringValue": "delivery" } }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": { "name": "com.anthropic.claude_code" },
+          "spans": [
+            {
+              "spanId": "aaaa000000000001", "name": "claude_code.interaction",
+              "startTimeUnixNano": "1700000000000000000", "endTimeUnixNano": "1700000420000000000",
+              "attributes": []
+            },
+            {
+              "spanId": "bbbb000000000001", "parentSpanId": "aaaa000000000001", "name": "claude_code.tool",
+              "startTimeUnixNano": "1700000001000000000", "endTimeUnixNano": "1700000020000000000",
+              "attributes": [
+                { "key": "claude_code.tool.label", "value": { "stringValue": "graphspec:triage" } }
+              ]
+            },
+            {
+              "spanId": "cccc000000000001", "parentSpanId": "bbbb000000000001", "name": "claude_code.llm_request",
+              "startTimeUnixNano": "1700000002000000000", "endTimeUnixNano": "1700000018000000000",
+              "attributes": [
+                { "key": "gen_ai.request.model", "value": { "stringValue": "claude-opus-5" } },
+                { "key": "gen_ai.usage.input_tokens", "value": { "intValue": "9000" } },
+                { "key": "gen_ai.usage.output_tokens", "value": { "intValue": "1200" } }
+              ]
+            },
+            {
+              "spanId": "bbbb000000000002", "parentSpanId": "aaaa000000000001", "name": "claude_code.tool",
+              "startTimeUnixNano": "1700000021000000000", "endTimeUnixNano": "1700000022000000000",
+              "attributes": [
+                { "key": "claude_code.tool.label", "value": { "stringValue": "graphspec:fanout" } }
+              ]
+            },
+            {
+              "spanId": "bbbb000000000003", "parentSpanId": "aaaa000000000001", "name": "claude_code.tool",
+              "startTimeUnixNano": "1700000023000000000", "endTimeUnixNano": "1700000100000000000",
+              "attributes": [
+                { "key": "claude_code.tool.label", "value": { "stringValue": "graphspec:implement" } },
+                { "key": "agent.name", "value": { "stringValue": "implementer" } }
+              ]
+            },
+            {
+              "spanId": "cccc000000000002", "parentSpanId": "bbbb000000000003", "name": "claude_code.llm_request",
+              "startTimeUnixNano": "1700000024000000000", "endTimeUnixNano": "1700000095000000000",
+              "attributes": [
+                { "key": "gen_ai.request.model", "value": { "stringValue": "claude-sonnet-5" } },
+                { "key": "gen_ai.usage.input_tokens", "value": { "intValue": "30000" } },
+                { "key": "gen_ai.usage.output_tokens", "value": { "intValue": "6000" } }
+              ]
+            },
+            {
+              "spanId": "bbbb000000000004", "parentSpanId": "aaaa000000000001", "name": "claude_code.tool",
+              "startTimeUnixNano": "1700000023000000000", "endTimeUnixNano": "1700000110000000000",
+              "attributes": [
+                { "key": "agent.name", "value": { "stringValue": "implementer" } }
+              ]
+            },
+            {
+              "spanId": "cccc000000000003", "parentSpanId": "bbbb000000000004", "name": "claude_code.llm_request",
+              "startTimeUnixNano": "1700000025000000000", "endTimeUnixNano": "1700000105000000000",
+              "attributes": [
+                { "key": "gen_ai.request.model", "value": { "stringValue": "claude-sonnet-5" } },
+                { "key": "gen_ai.usage.input_tokens", "value": { "intValue": "28000" } },
+                { "key": "gen_ai.usage.output_tokens", "value": { "intValue": "5500" } }
+              ]
+            },
+            {
+              "spanId": "bbbb000000000005", "parentSpanId": "aaaa000000000001", "name": "claude_code.tool",
+              "startTimeUnixNano": "1700000111000000000", "endTimeUnixNano": "1700000160000000000",
+              "attributes": [
+                { "key": "claude_code.tool.label", "value": { "stringValue": "graphspec:verify" } },
+                { "key": "agent.name", "value": { "stringValue": "verifier" } }
+              ]
+            },
+            {
+              "spanId": "cccc000000000004", "parentSpanId": "bbbb000000000005", "name": "claude_code.llm_request",
+              "startTimeUnixNano": "1700000112000000000", "endTimeUnixNano": "1700000155000000000",
+              "attributes": [
+                { "key": "gen_ai.request.model", "value": { "stringValue": "claude-opus-5" } },
+                { "key": "gen_ai.usage.input_tokens", "value": { "intValue": "20000" } },
+                { "key": "gen_ai.usage.output_tokens", "value": { "intValue": "2000" } }
+              ]
+            },
+            {
+              "spanId": "bbbb000000000006", "parentSpanId": "aaaa000000000001", "name": "claude_code.tool",
+              "startTimeUnixNano": "1700000161000000000", "endTimeUnixNano": "1700000230000000000",
+              "attributes": [
+                { "key": "claude_code.tool.label", "value": { "stringValue": "graphspec:implement" } },
+                { "key": "agent.name", "value": { "stringValue": "implementer" } }
+              ]
+            },
+            {
+              "spanId": "cccc000000000005", "parentSpanId": "bbbb000000000006", "name": "claude_code.llm_request",
+              "startTimeUnixNano": "1700000162000000000", "endTimeUnixNano": "1700000225000000000",
+              "attributes": [
+                { "key": "gen_ai.request.model", "value": { "stringValue": "claude-sonnet-5" } },
+                { "key": "gen_ai.usage.input_tokens", "value": { "intValue": "26000" } },
+                { "key": "gen_ai.usage.output_tokens", "value": { "intValue": "4000" } }
+              ]
+            },
+            {
+              "spanId": "bbbb000000000007", "parentSpanId": "aaaa000000000001", "name": "claude_code.tool",
+              "startTimeUnixNano": "1700000161000000000", "endTimeUnixNano": "1700000228000000000",
+              "attributes": [
+                { "key": "claude_code.tool.label", "value": { "stringValue": "graphspec:implement" } },
+                { "key": "agent.name", "value": { "stringValue": "implementer" } }
+              ]
+            },
+            {
+              "spanId": "cccc000000000006", "parentSpanId": "bbbb000000000007", "name": "claude_code.llm_request",
+              "startTimeUnixNano": "1700000163000000000", "endTimeUnixNano": "1700000220000000000",
+              "attributes": [
+                { "key": "gen_ai.request.model", "value": { "stringValue": "claude-sonnet-5" } },
+                { "key": "gen_ai.usage.input_tokens", "value": { "intValue": "24000" } },
+                { "key": "gen_ai.usage.output_tokens", "value": { "intValue": "3800" } }
+              ]
+            },
+            {
+              "spanId": "bbbb000000000008", "parentSpanId": "aaaa000000000001", "name": "claude_code.tool",
+              "startTimeUnixNano": "1700000231000000000", "endTimeUnixNano": "1700000280000000000",
+              "attributes": [
+                { "key": "claude_code.tool.label", "value": { "stringValue": "graphspec:verify" } },
+                { "key": "agent.name", "value": { "stringValue": "verifier" } }
+              ]
+            },
+            {
+              "spanId": "cccc000000000007", "parentSpanId": "bbbb000000000008", "name": "claude_code.llm_request",
+              "startTimeUnixNano": "1700000232000000000", "endTimeUnixNano": "1700000275000000000",
+              "attributes": [
+                { "key": "gen_ai.request.model", "value": { "stringValue": "claude-opus-5" } },
+                { "key": "gen_ai.usage.input_tokens", "value": { "intValue": "21000" } },
+                { "key": "gen_ai.usage.output_tokens", "value": { "intValue": "2400" } }
+              ]
+            },
+            {
+              "spanId": "bbbb000000000009", "parentSpanId": "aaaa000000000001", "name": "claude_code.tool",
+              "startTimeUnixNano": "1700000050000000000", "endTimeUnixNano": "1700000060000000000",
+              "attributes": [
+                { "key": "agent.name", "value": { "stringValue": "linter" } }
+              ]
+            },
+            {
+              "spanId": "dddd000000000001", "parentSpanId": "bbbb000000000005", "name": "claude_code.hook",
+              "startTimeUnixNano": "1700000156000000000", "endTimeUnixNano": "1700000157000000000",
+              "attributes": [
+                { "key": "hook.name", "value": { "stringValue": "post-verify" } }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

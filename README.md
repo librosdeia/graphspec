@@ -79,6 +79,27 @@ edges in a distinct colour with `max=N`; shape-encoded badges (⚡ external effe
 clusters when a graph spans more than one substrate; `entry` at the top, `terminals` at
 the bottom.
 
+## Trace
+
+```sh
+graphspec trace [FILE] --otlp FILE_OR_ENDPOINT [--session SESSION_ID]
+```
+
+Overlays real executions on the declared graph using the OpenTelemetry spans Claude Code
+already emits (`CLAUDE_CODE_ENABLE_TELEMETRY=1` plus
+`CLAUDE_CODE_ENHANCED_TELEMETRY_BETA=1`) — no invented log format. Accepts an OTLP JSON
+export or a collector endpoint. The output is DOT where executed nodes are filled in
+proportion to token cost (with a numeric badge — never tint alone), un-executed nodes
+are greyed out, repeat visits are labelled `×N` and the node where the run stopped is
+highlighted; a per-node cost table follows as `//` DOT comments, so the whole stream
+still pipes into `dot`.
+
+Spans map onto nodes by the correlation contract `scaffold` emits: a
+`graphspec:<node>` label first, the `agent` name second. Every executed unit that
+matches neither is reported as **drift** between the declared topology and the real
+one — surfacing that is a feature, not an error. Span shapes are beta; every assumption
+about them lives in one fixture-covered module (`graphspec/trace/mapping.py`).
+
 ## Status
 
 Pre-1.0, built milestone by milestone (`v0.1.0` = model + validator). The
