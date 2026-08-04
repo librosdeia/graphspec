@@ -100,6 +100,49 @@ matches neither is reported as **drift** between the declared topology and the r
 one — surfacing that is a feature, not an error. Span shapes are beta; every assumption
 about them lives in one fixture-covered module (`graphspec/trace/mapping.py`).
 
+## Diff
+
+```sh
+graphspec diff OLD NEW [--format text|markdown]
+```
+
+Semantic diff of two graph files: nodes, edges and state fields added, removed and
+changed (kind, agent, model, guards, caps, joins, effects). Exit 0 when topologically
+identical, 1 otherwise; `--format markdown` emits a PR-comment-ready summary. This — not
+a rendered image — is what makes topology reviewable: a change in the graph gets
+reviewed the way a change in code does.
+
+## Scaffold
+
+```sh
+graphspec scaffold [FILE] [--out .] [--force] [--target claude]
+```
+
+Generates, never overwriting by default: `.claude/agents/<agent>.md` per subagent node
+(frontmatter plus the node's contract — reads with optional markers, writes, advisory
+fields, expected evidence); a dynamic workflow skeleton under `.claude/workflows/` whose
+control flow is derived from the edges, guards, caps, fan-out and join policies; a
+**structured-output schema per writing node**, derived from the declared state fields and
+injected into the generated `agent()` call — the mechanism that keeps declaration and
+implementation in sync; `graphspec:<node>` correlation labels on every generated unit
+(what `trace` maps spans by); a hooks fragment for deterministic edges; and stubs for
+missing `impl:` paths. Re-running is idempotent. `validate --target claude` names every
+advisory field so the declaration/generated-code gap is never silent.
+
+## CI: review topology like code
+
+`.github/workflows/graphspec-validate.yml` is a **reusable workflow**: call it from any
+repository to validate `graphspec.yaml` on every pull request, post the `graphspec diff`
+against the base branch as a PR comment, and upload the rendered diagram as an artifact.
+
+```yaml
+jobs:
+  graphspec:
+    uses: librosdeia/graphspec/.github/workflows/graphspec-validate.yml@main
+    with:
+      file: ./graphspec.yaml
+```
+
 ## Status
 
 Pre-1.0, built milestone by milestone (`v0.1.0` = model + validator). The
