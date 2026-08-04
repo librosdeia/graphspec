@@ -1,0 +1,26 @@
+# fires E-VERIFIER: 'verify' verifies 'implement' but shares its agent and model
+graphspec: 1
+name: broken-e-verifier
+entry: implement
+terminals: [done]
+
+state:
+  verdict: {type: enum, values: [pass, fail], write: [verify], read: [verify]}
+
+nodes:
+  implement:
+    kind: subagent
+    agent: coder
+    model: claude-sonnet-5
+    effects: none
+  verify:
+    kind: subagent
+    agent: coder
+    model: claude-sonnet-5
+    verifies: implement
+    effects: none
+  done: {kind: terminal}
+
+edges:
+  - {from: implement, to: verify}
+  - {from: verify,     to: done}
