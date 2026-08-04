@@ -1,0 +1,29 @@
+# fires E-FANOUT: 'implement' fans out over a non-list field, has no 'as',
+# writes state directly, and its downstream 'verify' declares no join policy.
+graphspec: 1
+name: broken-fanout
+entry: implement
+terminals: [done]
+
+state:
+  branch:  {type: string, write: [implement]}
+  verdict: {type: enum, values: [pass, fail], write: [verify], read: [implement]}
+
+nodes:
+  implement:
+    kind: subagent
+    agent: implementer
+    fan_out_over: branch
+    concurrency: 3
+    isolation: worktree
+    effects: none
+  verify:
+    kind: subagent
+    agent: verifier
+    verifies: implement
+    effects: none
+  done: {kind: terminal}
+
+edges:
+  - {from: implement, to: verify}
+  - {from: verify,    to: done, when: "verdict == 'pass'"}
