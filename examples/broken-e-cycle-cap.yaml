@@ -1,0 +1,17 @@
+# fires E-CYCLE-CAP: the a -> b -> a cycle has no capped edge (no max/counter/on_exhausted)
+graphspec: 1
+name: broken-e-cycle-cap
+entry: start
+terminals: [end]
+
+nodes:
+  start: {kind: function, effects: none}
+  a:     {kind: function, effects: none}
+  b:     {kind: function, effects: none}
+  end:   {kind: terminal}
+
+edges:
+  - {from: start, to: a}
+  - {from: a,     to: b}
+  - {from: b,     to: a}
+  - {from: b,     to: end}
