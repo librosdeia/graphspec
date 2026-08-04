@@ -143,10 +143,40 @@ jobs:
       file: ./graphspec.yaml
 ```
 
+## Serve — the editor
+
+```sh
+graphspec serve [FILE] [--port PORT]
+```
+
+A local editor at `http://localhost:PORT`: YAML on the left, live graph on the right,
+validation inline as you type — with the exact CLI error strings, so the terminal, CI
+and the editor all speak identically. **One renderer:** the browser shows SVG produced
+server-side by the same pipeline as `graphspec render`; the editor is a view, never a
+second layout implementation. Without Graphviz it degrades honestly: DOT preview plus
+fully live validation.
+
+Three interactions you won't find in a generic YAML editor:
+
+1. **Bidirectional linking** — click a node to jump to its YAML; move the cursor to
+   halo the element in the canvas; hover an edge for its `when`/`max`/`counter`.
+2. **The data-flow lens** — select any state field: writers, readers and optional
+   readers get distinct outlines, and every path along which a required reader would
+   receive the field *unwritten* is tinted red — `E-READ-UNSET`, made visible before
+   any model runs.
+3. **Trace overlay** — drop an OTLP JSON export on the canvas: cost-proportional fills,
+   `×N` repeat badges, the stopped node highlighted, a per-node cost table, drift
+   surfaced.
+
+Local-first by design: binds to `127.0.0.1` only, every asset vendored, zero external
+requests, no telemetry. Works on a plane.
+
 ## Status
 
-Pre-1.0, built milestone by milestone (`v0.1.0` = model + validator). The
-`v1.0-book` tag will freeze the state the first edition of the book describes.
+**v1.0.0.** The `v1.0-book` tag freezes the state the first edition of *Graph
+Engineering* describes; the format version is `graphspec: 1`. Built milestone by
+milestone: `v0.1.0` model + validator, `v0.2.0` render, `v0.3.0` trace, `v0.4.0`
+scaffold + diff + CI, `v1.0.0` the serve editor.
 
 ## License
 
