@@ -1,0 +1,14 @@
+# fires E-HUMAN: the 'gate' node is kind: human but declares neither timeout nor on_timeout
+graphspec: 1
+name: broken-e-human
+entry: start
+terminals: [done]
+
+nodes:
+  start:  {kind: function, effects: none}
+  gate:   {kind: human, presents: [start]}
+  done:   {kind: terminal}
+
+edges:
+  - {from: start, to: gate}
+  - {from: gate,  to: done}
