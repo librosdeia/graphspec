@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>graphspec — editor</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header id="topbar">
+  <span id="graphname" title="unsaved changes are marked with a dot">graphspec.yaml</span>
+  <span id="pill" class="pill" role="status" aria-live="polite">loading…</span>
+  <span id="chips" aria-label="state fields (data-flow lens)"></span>
+  <span class="spacer"></span>
+  <div id="exportwrap">
+    <button id="exportbtn" aria-haspopup="menu" aria-expanded="false">Export ▾</button>
+    <div id="exportmenu" role="menu" hidden>
+      <button role="menuitem" data-fmt="dot">DOT</button>
+      <button role="menuitem" data-fmt="svg">SVG</button>
+      <button role="menuitem" data-fmt="png">PNG</button>
+    </div>
+  </div>
+  <button id="themebtn" title="toggle light/dark" aria-label="toggle theme">☾</button>
+</header>
+
+<div id="banner" hidden>
+  <span>The file changed on disk.</span>
+  <button id="reloadbtn">Reload</button>
+  <button id="dismissbanner">Keep my version</button>
+</div>
+
+<main id="split">
+  <section id="editorpane" aria-label="YAML editor">
+    <div id="gutter" aria-hidden="true"></div>
+    <div id="editorstack">
+      <pre id="highlights" aria-hidden="true"></pre>
+      <textarea id="editor" spellcheck="false" autocomplete="off"
+                aria-label="graphspec.yaml source"></textarea>
+    </div>
+  </section>
+  <div id="divider" role="separator" aria-orientation="vertical" tabindex="0"
+       aria-label="resize panes"></div>
+  <section id="canvaspane" aria-label="graph canvas">
+    <div id="canvas" tabindex="0" role="img" aria-label="rendered graph"></div>
+    <div id="dotpreview" hidden><div class="hintbox" id="gvhint"></div><pre id="dottext"></pre></div>
+    <div id="tooltip" hidden></div>
+    <div id="picker" hidden>
+      <h2>Start from…</h2>
+      <div id="pickerlist"></div>
+    </div>
+  </section>
+</main>
+
+<section id="problems" aria-label="problems">
+  <button id="problemstoggle" aria-expanded="true">▾ PROBLEMS (<span id="problemcount">0</span>)</button>
+  <ul id="problemlist"></ul>
+  <div id="costpanel" hidden></div>
+</section>
+
+<script src="/app.js"></script>
+<script src="/lens.js"></script>
+<script src="/traceoverlay.js"></script>
+<script src="/a11y.js"></script>
+</body>
+</html>
