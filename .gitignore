@@ -13,3 +13,9 @@ build/
 
 # macOS
 .DS_Store
+
+# Internal product docs — not for the public repo
+docs/graphspec-PRD.md
+docs/PRD-review.md
+docs/graphspec-UI-SPEC.md
+docs/superpowers/
