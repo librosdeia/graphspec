@@ -172,6 +172,7 @@
   }
 
   // ---------------------------------------------------------------- canvas
+  let fittedOnce = false;
   function drawRender(r) {
     if (r.format === 'svg') {
       dotPreview.hidden = true;
@@ -182,9 +183,14 @@
       const svg = canvas.querySelector('svg');
       if (svg) {
         svg.removeAttribute('width'); svg.removeAttribute('height');
+        const vb = svg.viewBox && svg.viewBox.baseVal;
+        if (vb && vb.width) {
+          svg.style.width = vb.width + 'px';
+          svg.style.height = vb.height + 'px';
+        }
         svg.style.transformOrigin = '0 0';
-        applyPan();
         annotateSvg(svg);
+        if (!fittedOnce) { fittedOnce = true; fit(); } else { applyPan(); }
       }
       canvas.hidden = false;
     } else {
@@ -273,7 +279,24 @@
     applyPan();
   }, { passive: false });
   function zoom(delta) { state.pan.scale = Math.min(6, Math.max(0.15, state.pan.scale * (delta > 0 ? 1.2 : 0.8))); applyPan(); }
-  function fit() { state.pan = { x: 20, y: 20, scale: 1 }; applyPan(); }
+  function fit() {
+    // center the sheet on the drafting grid with a generous margin
+    const svg = canvas.querySelector('svg');
+    if (!svg) { state.pan = { x: 20, y: 20, scale: 1 }; applyPan(); return; }
+    const vb = svg.viewBox && svg.viewBox.baseVal;
+    const w = (vb && vb.width) || svg.getBoundingClientRect().width / state.pan.scale || 300;
+    const h = (vb && vb.height) || svg.getBoundingClientRect().height / state.pan.scale || 150;
+    const margin = 48;
+    const scale = Math.min(1.25,
+      (canvas.clientWidth - 2 * margin) / w,
+      (canvas.clientHeight - 2 * margin) / h);
+    state.pan = {
+      x: Math.max(margin, (canvas.clientWidth - w * scale) / 2),
+      y: Math.max(margin, (canvas.clientHeight - h * scale) / 2),
+      scale: Math.max(0.15, scale),
+    };
+    applyPan();
+  }
 
   // ------------------------------------------------------------------ split
   const split = $('split'), divider = $('divider');

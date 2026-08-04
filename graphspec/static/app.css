@@ -12,7 +12,7 @@
   --panel: #f3f3ec; --accent: #0e6e72; --accent-soft: #dcefee;
   --ok: #1a7f37; --warn: #8a5b06; --err: #c62828;
   --halo: #0e6e72; --tint-err: #fbe4e4;
-  --grid-dot: rgba(14, 110, 114, 0.16);
+  --grid-dot: rgba(14, 110, 114, 0.28); --grid-major: rgba(14, 110, 114, 0.45);
   --canvas-bg: #f7f7f2;
   --term-bg: #14191f; --term-fg: #d7dee6; --term-muted: #93a0ad;
   --term-err: #ff8383; --term-warn: #e8c06a; --term-accent: #6fd3d8;
@@ -25,7 +25,7 @@
     --panel: #151c25; --accent: #58c6cc; --accent-soft: #0e3a40;
     --ok: #4cc38a; --warn: #d9a83f; --err: #f07d7d;
     --halo: #58c6cc; --tint-err: #46242a;
-    --grid-dot: rgba(88, 198, 204, 0.13);
+    --grid-dot: rgba(88, 198, 204, 0.22); --grid-major: rgba(88, 198, 204, 0.4);
     --canvas-bg: #0d1218;
     --term-bg: #0b0f14; --term-fg: #d7dee6; --term-muted: #8b97a5;
     --term-err: #ff8f8f; --term-warn: #e8c06a; --term-accent: #6fd3d8;
@@ -38,7 +38,7 @@
   --panel: #f3f3ec; --accent: #0e6e72; --accent-soft: #dcefee;
   --ok: #1a7f37; --warn: #8a5b06; --err: #c62828;
   --halo: #0e6e72; --tint-err: #fbe4e4;
-  --grid-dot: rgba(14, 110, 114, 0.16);
+  --grid-dot: rgba(14, 110, 114, 0.28); --grid-major: rgba(14, 110, 114, 0.45);
   --canvas-bg: #f7f7f2;
   --term-bg: #14191f; --term-fg: #d7dee6; --term-muted: #93a0ad;
   --term-err: #ff8383; --term-warn: #e8c06a; --term-accent: #6fd3d8;
@@ -50,7 +50,7 @@
   --panel: #151c25; --accent: #58c6cc; --accent-soft: #0e3a40;
   --ok: #4cc38a; --warn: #d9a83f; --err: #f07d7d;
   --halo: #58c6cc; --tint-err: #46242a;
-  --grid-dot: rgba(88, 198, 204, 0.13);
+  --grid-dot: rgba(88, 198, 204, 0.22); --grid-major: rgba(88, 198, 204, 0.4);
   --canvas-bg: #0d1218;
   --term-bg: #0b0f14; --term-fg: #d7dee6; --term-muted: #8b97a5;
   --term-err: #ff8f8f; --term-warn: #e8c06a; --term-accent: #6fd3d8;
@@ -200,9 +200,12 @@ button:focus-visible, [tabindex]:focus-visible, a:focus-visible {
 #canvas {
   width: 100%; height: 100%; cursor: grab;
   background-color: var(--canvas-bg);
-  background-image: radial-gradient(circle, var(--grid-dot) 1px, transparent 1.2px);
-  background-size: 22px 22px;
-  background-position: 11px 11px;
+  /* graph paper: minor dots every 22px, a heavier dot every 5th cell */
+  background-image:
+    radial-gradient(circle, var(--grid-major) 1.4px, transparent 1.8px),
+    radial-gradient(circle, var(--grid-dot) 1px, transparent 1.4px);
+  background-size: 110px 110px, 22px 22px;
+  background-position: 11px 11px, 11px 11px;
 }
 #canvas:active { cursor: grabbing; }
 /* opacity only: pan/zoom owns the inline transform, the animation must not fight it.
@@ -252,6 +255,10 @@ button:focus-visible, [tabindex]:focus-visible, a:focus-visible {
   background-size: 22px 22px;
 }
 #picker[hidden] { display: none; }
+#picker { background-image:
+    radial-gradient(circle, var(--grid-major) 1.4px, transparent 1.8px),
+    radial-gradient(circle, var(--grid-dot) 1px, transparent 1.4px);
+  background-size: 110px 110px, 22px 22px; }
 #picker h2 {
   margin: 0; font: 600 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
