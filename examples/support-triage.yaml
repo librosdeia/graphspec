@@ -1,0 +1,96 @@
+graphspec: 1
+name: support-triage
+entry: intake
+terminals: [closed]
+
+state:
+  ticket_id: {type: string, write: [intake],
+              read: [kb_lookup, auto_bot, draft_review, agent_review, send_reply,
+                     send_reminder, auto_close, resolve_ticket, tier2_escalate]}
+  category:  {type: enum, values: [howto, bug, billing], write: [intake]}
+  priority:  {type: enum, values: [low, normal, high], write: [intake]}
+  # the race: kb_lookup and auto_bot each write the same pair of fields —
+  # draft_review's join: first proceeds on whichever finishes first
+  candidate_answer:     {type: string, write: [kb_lookup, auto_bot], read: [draft_review]}
+  candidate_confidence: {type: number, write: [kb_lookup, auto_bot], read: [draft_review]}
+  auto_resolvable: {type: bool,   write: [draft_review]}
+  final_response:  {type: string, write: [draft_review], read: [send_reply]}
+  decision:        {type: enum, values: [resolved, needs_escalation], write: [agent_review]}
+  resolution_notes: {type: string, write: [agent_review, tier2_escalate], read: [resolve_ticket]}
+  closure_reason:  {type: string, write: [auto_close]}
+  reminder_count:  {type: number}   # counter — written by the edge that declares it
+
+nodes:
+  intake:
+    kind: llm
+    model: claude-haiku-5
+    tools: [ticket_reader, kb_search]
+    budget_tokens: 20000
+    effects: none
+  kb_lookup:
+    kind: function
+    impl: scripts/support_kb_lookup.py
+    effects: none
+  auto_bot:
+    kind: llm
+    model: claude-sonnet-5
+    tools: [kb_search, macro_library]
+    budget_tokens: 8000
+    effects: none
+  draft_review:
+    kind: function
+    impl: scripts/support_score_confidence.py
+    join: first
+    effects: none
+  send_reply:
+    kind: function
+    impl: scripts/support_send_reply.py
+    effects: external
+    idempotency_key: "{ticket_id}-reply"
+  agent_review:
+    kind: human
+    timeout: 8h
+    on_timeout: send_reminder
+    presents: [priority, candidate_answer]
+  send_reminder:
+    kind: function
+    impl: scripts/support_send_reminder.py
+    effects: external
+    idempotency_key: "{ticket_id}-reminder-{reminder_count}"
+  auto_close:
+    kind: function
+    impl: scripts/support_auto_close.py
+    effects: external
+    idempotency_key: "{ticket_id}-autoclose"
+  resolve_ticket:
+    kind: function
+    impl: scripts/support_resolve_ticket.py
+    effects: external
+    idempotency_key: "{ticket_id}-resolve"
+  tier2_escalate:
+    kind: subagent
+    agent: tier2-specialist
+    model: claude-sonnet-5
+    effects: none
+  closed:
+    kind: terminal
+
+edges:
+  - {from: intake,         to: kb_lookup,      when: "category == 'howto' || category == 'bug'"}
+  - {from: intake,         to: auto_bot,       when: "category == 'howto' || category == 'bug'"}
+  - {from: intake,         to: agent_review,   when: "category == 'billing'"}
+  - {from: kb_lookup,      to: draft_review}
+  - {from: auto_bot,       to: draft_review}
+  - {from: draft_review,   to: send_reply,     when: "auto_resolvable == true"}
+  - {from: draft_review,   to: agent_review,   when: "auto_resolvable == false"}
+  - {from: send_reply,     to: closed}
+  - {from: agent_review,   to: resolve_ticket, when: "decision == 'resolved'"}
+  - {from: agent_review,   to: tier2_escalate, when: "decision == 'needs_escalation'"}
+  - {from: tier2_escalate, to: resolve_ticket}
+  - {from: resolve_ticket, to: closed}
+  - {from: send_reminder,  to: agent_review,
+     max: 2, counter: reminder_count, on_exhausted: auto_close}
+  - {from: auto_close,     to: closed}
+
+checkpoints:
+  after: [draft_review, agent_review]

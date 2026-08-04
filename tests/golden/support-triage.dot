@@ -1,0 +1,34 @@
+digraph "support-triage" {
+  rankdir=TB;
+  node [fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9];
+  "agent_review" [shape="diamond", style="filled", fillcolor="#FDE9C8", label="agent_review\n✓"];
+  "auto_bot" [shape="box", style="rounded,filled", fillcolor="#DDEBF7", label="auto_bot"];
+  "auto_close" [shape="box", style="filled", fillcolor="#F2F2F2", label="auto_close ⚡"];
+  "closed" [shape="doublecircle", style="filled", fillcolor="#F2F2F2", label="closed"];
+  "draft_review" [shape="box", style="filled", fillcolor="#F2F2F2", label="1 draft_review\n✓"];
+  "intake" [shape="box", style="rounded,filled", fillcolor="#DDEBF7", label="intake"];
+  "kb_lookup" [shape="box", style="filled", fillcolor="#F2F2F2", label="kb_lookup"];
+  "resolve_ticket" [shape="box", style="filled", fillcolor="#F2F2F2", label="resolve_ticket ⚡"];
+  "send_reminder" [shape="box", style="filled", fillcolor="#F2F2F2", label="send_reminder ⚡"];
+  "send_reply" [shape="box", style="filled", fillcolor="#F2F2F2", label="send_reply ⚡"];
+  "tier2_escalate" [shape="box", peripheries="2", style="filled", fillcolor="#E6F2E6", label="tier2_escalate"];
+  {rank=source; "intake";}
+  {rank=sink; "closed";}
+  "intake" -> "kb_lookup" [style="dashed", label="category == 'howto' || category == 'bug'"];
+  "intake" -> "auto_bot" [style="dashed", label="category == 'howto' || category == 'bug'"];
+  "intake" -> "agent_review" [style="dashed", label="category == 'billing'"];
+  "kb_lookup" -> "draft_review";
+  "auto_bot" -> "draft_review";
+  "draft_review" -> "send_reply" [style="dashed", label="auto_resolvable == true"];
+  "draft_review" -> "agent_review" [style="dashed", label="auto_resolvable == false"];
+  "send_reply" -> "closed";
+  "agent_review" -> "resolve_ticket" [style="dashed", label="decision == 'resolved'"];
+  "agent_review" -> "tier2_escalate" [style="dashed", label="decision == 'needs_escalation'"];
+  "tier2_escalate" -> "resolve_ticket";
+  "resolve_ticket" -> "closed";
+  "send_reminder" -> "agent_review" [color="#B22222", label="max=2"];
+  "auto_close" -> "closed";
+  "agent_review" -> "send_reminder" [color="#B22222", style="dashed", label="on_timeout"];
+  "send_reminder" -> "auto_close" [color="#B22222", style="dashed", label="on_exhausted"];
+}
