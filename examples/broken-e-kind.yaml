@@ -1,0 +1,15 @@
+# fires E-KIND: 'bad_node' has an invalid kind, and 'fanout' has an impl path
+# that does not exist on disk (resolved relative to this YAML file).
+graphspec: 1
+name: broken-e-kind
+entry: bad_node
+terminals: [done]
+
+nodes:
+  bad_node: {kind: banana}
+  fanout:   {kind: function, impl: scripts/nonexistent.py, effects: none}
+  done:     {kind: terminal}
+
+edges:
+  - {from: bad_node, to: fanout}
+  - {from: fanout,    to: done}
