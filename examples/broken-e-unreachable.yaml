@@ -1,0 +1,16 @@
+# fires E-UNREACHABLE: 'orphan' has no inbound edge from any reachable node
+graphspec: 1
+name: broken-e-unreachable
+entry: triage
+terminals: [done]
+
+state:
+  category: {type: enum, values: [go, stop]}
+
+nodes:
+  triage:  {kind: llm, effects: none}
+  orphan:  {kind: terminal}
+  done:    {kind: terminal}
+
+edges:
+  - {from: triage, to: done, when: "category == 'go'"}
