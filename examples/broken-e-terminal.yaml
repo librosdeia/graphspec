@@ -1,0 +1,19 @@
+# fires E-TERMINAL: 'done' is listed in terminals but has an outgoing edge,
+# and 'aborted' has kind: terminal but is missing from terminals.
+graphspec: 1
+name: broken-e-terminal
+entry: start
+terminals: [done]
+
+state:
+  status: {type: enum, values: [ok, bad], write: [start]}
+
+nodes:
+  start:    {kind: llm, effects: none}
+  done:     {kind: terminal}
+  aborted:  {kind: terminal}
+
+edges:
+  - {from: start, to: done,    when: "status == 'ok'"}
+  - {from: start, to: aborted, when: "status == 'bad'"}
+  - {from: done,  to: aborted}
