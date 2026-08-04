@@ -13,7 +13,7 @@
   --ok: #1a7f37; --warn: #8a5b06; --err: #c62828;
   --halo: #0e6e72; --tint-err: #fbe4e4;
   --grid-dot: rgba(14, 110, 114, 0.28); --grid-major: rgba(14, 110, 114, 0.45);
-  --canvas-bg: #f7f7f2;
+  --canvas-bg: #ffffff;
   --term-bg: #14191f; --term-fg: #d7dee6; --term-muted: #93a0ad;
   --term-err: #ff8383; --term-warn: #e8c06a; --term-accent: #6fd3d8;
   --shadow: 0 1px 2px rgba(24, 30, 36, 0.08), 0 4px 14px rgba(24, 30, 36, 0.06);
@@ -39,7 +39,7 @@
   --ok: #1a7f37; --warn: #8a5b06; --err: #c62828;
   --halo: #0e6e72; --tint-err: #fbe4e4;
   --grid-dot: rgba(14, 110, 114, 0.28); --grid-major: rgba(14, 110, 114, 0.45);
-  --canvas-bg: #f7f7f2;
+  --canvas-bg: #ffffff;
   --term-bg: #14191f; --term-fg: #d7dee6; --term-muted: #93a0ad;
   --term-err: #ff8383; --term-warn: #e8c06a; --term-accent: #6fd3d8;
   --shadow: 0 1px 2px rgba(24, 30, 36, 0.08), 0 4px 14px rgba(24, 30, 36, 0.06);
@@ -208,15 +208,27 @@ button:focus-visible, [tabindex]:focus-visible, a:focus-visible {
   background-position: 11px 11px, 11px 11px;
 }
 #canvas:active { cursor: grabbing; }
-/* opacity only: pan/zoom owns the inline transform, the animation must not fight it.
-   The drawing is ink on paper in both themes (the book prints it that way): the
-   sheet keeps its white ground and casts a shadow on the drafting grid — in dark
-   mode the canvas reads as a lightbox. */
-#canvas svg {
-  user-select: none; animation: settle 0.28s ease-out;
+/* opacity only: pan/zoom owns the inline transform, the animation must not fight it. */
+#canvas svg { user-select: none; animation: settle 0.28s ease-out; }
+@keyframes settle { from { opacity: 0; } }
+
+/* Light theme: the drawing sits directly on the graph paper — Graphviz's white
+   background polygon (first direct child of g.graph) goes transparent. CSS wins
+   over the fill="white" presentation attribute without !important. */
+#canvas svg > g > polygon:first-of-type { fill: transparent; }
+
+/* Dark theme: black ink needs a light ground — the graph keeps its white sheet
+   (a lightbox on the blueprint table). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) #canvas svg {
+    background: #ffffff; border-radius: 4px; box-shadow: var(--shadow);
+  }
+  :root:not([data-theme="light"]) #canvas svg > g > polygon:first-of-type { fill: #ffffff; }
+}
+:root[data-theme="dark"] #canvas svg {
   background: #ffffff; border-radius: 4px; box-shadow: var(--shadow);
 }
-@keyframes settle { from { opacity: 0; } }
+:root[data-theme="dark"] #canvas svg > g > polygon:first-of-type { fill: #ffffff; }
 #canvas.dimmed svg { opacity: 0.4; filter: saturate(0.55); transition: opacity 0.2s, filter 0.2s; }
 #canvas .halo ellipse, #canvas .halo polygon, #canvas .halo path,
 #canvas .halo rect { stroke: var(--halo) !important; stroke-width: 3px !important; }
